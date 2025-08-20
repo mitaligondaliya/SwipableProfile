@@ -17,17 +17,17 @@ enum MatchResult {
 
 // MARK: - Swipe Direction
 enum SwipeDirection {
-    case left
-    case right
-    case up
-    
+    case swipeLeft
+    case swipeRight
+    case swipeUP
+
     var matchResult: MatchResult {
         switch self {
-        case .left:
+        case .swipeLeft:
             return .dislike
-        case .right:
+        case .swipeRight:
             return .like
-        case .up:
+        case .swipeUP:
             return .superLike
         }
     }

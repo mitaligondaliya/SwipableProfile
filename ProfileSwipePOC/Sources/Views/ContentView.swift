@@ -5,10 +5,9 @@
 //  Created by Mitali Gondaliya on 20/08/25.
 //
 
-// MARK: - Main Swipe Screen
-// MARK: - Main Swipe Screen
 import SwiftUI
 
+// MARK: - Main Swipe Screen
 struct ContentView: View {
     @StateObject private var viewModel = ProfileViewModel()
     @State private var selectedProfile: Profile?
@@ -42,19 +41,22 @@ struct ContentView: View {
                         // Cards
                         ZStack {
                             ForEach(viewModel.profiles.reversed()) { profile in
-                                SwipeCardView(profile: profile) { direction, profile in
+                                SwipeCardView(
+                                    profile: profile) { direction, profile in
                                     handleSwipe(direction, profile: profile)
                                 }
-                                .onTapGesture { selectedProfile = profile }
+                                .onTapGesture {
+                                    selectedProfile = profile
+                                }
                             }
                         }
                         .padding()
 
                         // Bottom Controls
                         BottomControls(
-                            onDislike: { triggerSwipe(.left) },
-                            onSuperLike: { triggerSwipe(.up) },
-                            onLike: { triggerSwipe(.right) }
+                            onDislike: { triggerSwipe(.swipeLeft) },
+                            onSuperLike: { triggerSwipe(.swipeUP) },
+                            onLike: { triggerSwipe(.swipeRight) }
                         )
                         .padding(.top, 20)
                     }
@@ -63,7 +65,7 @@ struct ContentView: View {
             }
             .task { await viewModel.fetchProfiles() }
             .sheet(item: $selectedProfile) { profile in
-                ProfileDetailView(profile: profile, isPresented: $selectedProfile)
+                ProfileDetailView(profile: profile, selectedProfile: $selectedProfile)
             }
             .navigationTitle("Discover")
             .navigationBarTitleDisplayMode(.inline)
@@ -72,9 +74,9 @@ struct ContentView: View {
 
     private func handleSwipe(_ direction: SwipeDirection, profile: Profile) {
         switch direction {
-        case .right: print("✅ Liked \(profile.name)")
-        case .left: print("❌ Disliked \(profile.name)")
-        case .up: print("⭐ SuperLiked \(profile.name)")
+        case .swipeRight: print("✅ Liked \(profile.name)")
+        case .swipeLeft: print("❌ Disliked \(profile.name)")
+        case .swipeUP: print("⭐ SuperLiked \(profile.name)")
         }
         viewModel.removeProfile(profile)
     }
@@ -125,6 +127,7 @@ struct EmptyProfilesView: View {
     }
 }
 
+// MARK: - Bottom Controls
 struct BottomControls: View {
     let onDislike: () -> Void
     let onSuperLike: () -> Void
@@ -155,7 +158,6 @@ struct BottomControls: View {
 }
 
 // MARK: - Preview
-
 #Preview {
     ContentView()
 }

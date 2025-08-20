@@ -5,42 +5,41 @@
 //  Created by Mitali Gondaliya on 20/08/25.
 //
 
-// MARK: - Swipe Card View
 import SwiftUI
 
+// MARK: - Swipe Card View
 struct SwipeCardView: View {
     let profile: Profile
     let onSwipe: (SwipeDirection, Profile) -> Void
 
     @State private var offset: CGSize = .zero
     @GestureState private var isDragging = false
-
     private let swipeThreshold: CGFloat = 120
 
     var body: some View {
-        ZStack {
-            // MARK: - Card Background
+        GeometryReader { geo in
             ZStack(alignment: .bottomLeading) {
+                // Profile Image
                 Image(profile.imageName ?? "placeholder")
                     .resizable()
                     .scaledToFill()
-                    .frame(height: 420)
+                    .frame(width: geo.size.width, height: geo.size.height)
                     .clipped()
-                    .cornerRadius(20)
 
-                // Gradient for text contrast
+                // Gradient Overlay
                 LinearGradient(
-                    gradient: Gradient(colors: [Color.black.opacity(0.6), Color.clear]),
+                    colors: [Color.black.opacity(0.6), Color.clear],
                     startPoint: .bottom,
-                    endPoint: .top
+                    endPoint: .center
                 )
-                .cornerRadius(20)
 
+                // Profile Info
                 VStack(alignment: .leading, spacing: 6) {
                     Text(profile.name)
                         .font(.title)
-                        .bold()
+                        .fontWeight(.bold)
                         .foregroundColor(.white)
+
                     if let bio = profile.bio {
                         Text(bio)
                             .font(.subheadline)
@@ -50,88 +49,86 @@ struct SwipeCardView: View {
                 }
                 .padding()
             }
+            .cornerRadius(20)
+            .shadow(radius: 8)
+            .offset(offset)
+            .rotationEffect(.degrees(Double(offset.width / 20)))
+            .gesture(
+                DragGesture()
+                    .updating($isDragging) { _, state, _ in
+                        state = true
+                    }
+                    .onChanged { gesture in
+                        offset = gesture.translation
+                    }
+                    .onEnded { gesture in
+                        handleDragEnd(gesture: gesture, geo: geo)
+                    }
+            )
+            .animation(.spring(), value: offset)
 
-            // MARK: - Overlay Badges
-            if offset.width > 0 {
-                BadgeView(text: "LIKE", color: .green)
-                    .rotationEffect(.degrees(-20))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(30)
-                    .opacity(min(Double(offset.width / 100), 1))
-            } else if offset.width < 0 {
-                BadgeView(text: "NOPE", color: .red)
-                    .rotationEffect(.degrees(20))
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(30)
-                    .opacity(min(Double(-offset.width / 100), 1))
-            } else if offset.height < 0 {
-                BadgeView(text: "SUPER LIKE", color: .blue, fontSize: 28)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 60)
-                    .opacity(min(Double(-offset.height / 100), 1))
+            // Like / Dislike / SuperLike Overlays
+            .overlay(alignment: .topLeading) {
+                if offset.width > 50 {
+                    SwipeOverlayLabel(text: "LIKE", color: .green, rotation: -20)
+                        .padding(30)
+                } else if offset.width < -50 {
+                    SwipeOverlayLabel(text: "NOPE", color: .red, rotation: 20)
+                        .padding(30)
+                } else if offset.height < -50 {
+                    SwipeOverlayLabel(text: "SUPER LIKE", color: .blue, rotation: 0)
+                        .padding(.top, 60)
+                        .frame(maxWidth: .infinity)
+                }
             }
         }
-        .offset(x: offset.width, y: offset.height)
-        .rotationEffect(.degrees(Double(offset.width / 20)))
-        .scaleEffect(isDragging ? 1.02 : 1)
-        .opacity(1 - Double(abs(offset.width) / 400))
-        .gesture(
-            DragGesture()
-                .updating($isDragging) { _, state, _ in
-                    state = true
-                }
-                .onChanged { gesture in
-                    offset = gesture.translation
-                }
-                .onEnded { gesture in
-                    handleSwipe(gesture)
-                }
-        )
-        .animation(.spring(), value: offset)
     }
 
-    // MARK: - Handle Swipe 
-    private func handleSwipe(_ gesture: DragGesture.Value) {
-        if abs(gesture.translation.width) > swipeThreshold {
-            // Left or Right Swipe
-            let direction: SwipeDirection = gesture.translation.width > 0 ? .right : .left
+    private func handleDragEnd(gesture: DragGesture.Value, geo: GeometryProxy) {
+        let drag = gesture.translation
+        if drag.width > swipeThreshold {
+            // Swiped Right
             withAnimation(.spring()) {
-                offset = CGSize(width: gesture.translation.width * 2, height: gesture.translation.height)
+                offset = CGSize(width: geo.size.width * 2, height: drag.height)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                onSwipe(direction, profile)
-                offset = .zero
-            }
-        } else if gesture.translation.height < -swipeThreshold {
-            // Super Like Swipe
+            onSwipe(.swipeRight, profile)
+        } else if drag.width < -swipeThreshold {
+            // Swiped Left
             withAnimation(.spring()) {
-                offset = CGSize(width: 0, height: -800)
+                offset = CGSize(width: -geo.size.width * 2, height: drag.height)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                onSwipe(.up, profile)
-                offset = .zero
+            onSwipe(.swipeLeft, profile)
+        } else if drag.height < -swipeThreshold {
+            // Swiped Up
+            withAnimation(.spring()) {
+                offset = CGSize(width: 0, height: -geo.size.height * 2)
             }
+            onSwipe(.swipeUP, profile)
         } else {
-            // Bounce back if threshold not met
-            withAnimation(.interpolatingSpring(stiffness: 200, damping: 15)) {
+            // Reset if not swiped enough
+            withAnimation(.spring()) {
                 offset = .zero
             }
         }
     }
 }
 
-// MARK: - Reusable Badge
-struct BadgeView: View {
+// MARK: - Swipe Overlay Label
+struct SwipeOverlayLabel: View {
     let text: String
     let color: Color
-    var fontSize: CGFloat = 40
+    let rotation: Double
 
     var body: some View {
         Text(text)
-            .font(.system(size: fontSize, weight: .bold))
+            .font(.system(size: 36, weight: .bold))
+            .padding(12)
             .foregroundColor(color)
-            .padding(8)
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(color, lineWidth: 4))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(color, lineWidth: 4)
+            )
+            .rotationEffect(.degrees(rotation))
     }
 }
 

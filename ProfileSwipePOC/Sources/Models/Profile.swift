@@ -7,7 +7,6 @@
 
 import Foundation
 import SwiftUI
-import Foundation
 
 // MARK: - Profile Model
 struct Profile: Identifiable, Codable, Equatable, Hashable {
@@ -21,11 +20,11 @@ struct Profile: Identifiable, Codable, Equatable, Hashable {
     let occupation: String?
     let education: String?
     let location: String?
-    
+
     private enum CodingKeys: String, CodingKey {
         case name, age, bio, imageName, interests, distance, occupation, education, location
     }
-    
+
     var distanceText: String {
         if distance < 1 {
             return "Less than 1 km away"
