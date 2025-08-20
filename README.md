@@ -49,6 +49,18 @@ This project demonstrates modern iOS best practices:
 
 ## 🚀 Getting Started
 
-### 1. Clone Repo
+### 1. Clone Repository
+
 ```bash
 git clone https://github.com/your-username/ProfileSwipePOC.git
+cd ProfileSwipePOC
+```
+
+### 2. Open Project in Xcode
+
+Double-click `ProfileSwipePOC.xcodeproj` or `ProfileSwipePOC.xcworkspace`.
+
+### 3. Run the App
+
+Select a simulator or device and press **Run (⌘R)**.
+
