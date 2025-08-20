@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		48E90F7D2E55FCC9006C7980 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 48E90F7B2E55FCC9006C7980 /* README.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		489EAE682E55C6FB00E6CF30 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		489EAE592E55C6F700E6CF30 /* ProfileSwipePOC.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProfileSwipePOC.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		489EAE672E55C6FB00E6CF30 /* ProfileSwipePOCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ProfileSwipePOCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		489EAE712E55C6FB00E6CF30 /* ProfileSwipePOCUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ProfileSwipePOCUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		48E90F7B2E55FCC9006C7980 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +80,7 @@
 		489EAE502E55C6F700E6CF30 = {
 			isa = PBXGroup;
 			children = (
+				48E90F7B2E55FCC9006C7980 /* README.md */,
 				489EAE5B2E55C6F700E6CF30 /* ProfileSwipePOC */,
 				489EAE6A2E55C6FB00E6CF30 /* ProfileSwipePOCTests */,
 				489EAE742E55C6FB00E6CF30 /* ProfileSwipePOCUITests */,
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				48E90F7D2E55FCC9006C7980 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
