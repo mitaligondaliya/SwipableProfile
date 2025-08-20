@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Sophia",
+    "age": 25,
+    "bio": "Traveler ✈️ | Foodie 🍜 | Loves dogs 🐶",
+    "imageName": "p1",
+    "interests": ["Yoga", "Photography", "Music"],
+    "distance": 2.5,
+    "occupation": "Product Designer",
+    "education": "Stanford University",
+    "location": "San Francisco, CA"
+  },
+  {
+    "name": "Bob",
+    "age": 28,
+    "bio": "iOS Developer 💻 | Music lover 🎵",
+    "imageName": "p2",
+    "interests": ["Coding", "Guitar", "Travel"],
+    "distance": 0.8,
+    "occupation": "Software Engineer",
+    "education": "MIT",
+    "location": "Boston, MA"
+  },
+  {
+      "name": "Alice",
+      "age": 26,
+      "bio": "Love hiking, coffee, and good books.",
+      "imageName": "p3",
+      "interests": ["Hiking", "Travel", "Cooking"],
+      "distance": 2.4,
+      "occupation": "Software Engineer",
+      "education": "MIT",
+      "location": "San Francisco"
+    },
+    {
+      "name": "Maria",
+      "age": 29,
+      "bio": "Music producer & foodie.",
+      "imageName": "p4",
+      "interests": ["Music", "Photography"],
+      "distance": 5.1,
+      "occupation": "Music Producer",
+      "education": "NYU",
+      "location": "New York"
+    },
+    {
+      "name": "Bella",
+      "age": 25,
+      "bio": "Program Manager | Wanderlust",
+      "imageName": "p5",
+      "interests": ["Cooking", "Photography"],
+      "distance": 5.1,
+      "occupation": "Engineer",
+      "education": "Saarland University",
+      "location": "Germany"
+    }
+]
