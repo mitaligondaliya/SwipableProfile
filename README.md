@@ -39,12 +39,12 @@ This project demonstrates modern iOS best practices:
 
 | Swipe Screen | Profile Detail |
 |--------------|----------------|
-| ![Swipe Screen](ProfileSwipePOC/Screenshots/mainCard.png) | ![Detail Screen](ProfileSwipePOC/Screenshots/detailView.png) |
+| ![Swipe Screen](ProfileSwipePOC/Screenshots/mainScreen.png) | ![Detail Screen](ProfileSwipePOC/Screenshots/profileDetailScreen.png) |
 
 ---
 
 ## 📹 Demo
-![Swipe Screen](ProfileSwipePOC/Screenshots/swipeProfile.gif)
+![Swipe Screen](ProfileSwipePOC/Screenshots/demo.gif)
 ---
 
 ## 🚀 Getting Started
