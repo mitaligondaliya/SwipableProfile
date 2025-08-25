@@ -44,7 +44,7 @@ This project demonstrates modern iOS best practices:
 ---
 
 ## 📹 Demo
-![Swipe Screen](ProfileSwipePOC/Screenshots/profiledemo.gif)
+![Swipe Screen](ProfileSwipePOC/Screenshots/profileDemo.gif)
 ---
 
 ## 🚀 Getting Started
