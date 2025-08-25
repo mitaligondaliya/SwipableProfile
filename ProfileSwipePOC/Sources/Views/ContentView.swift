@@ -7,47 +7,67 @@
 
 import SwiftUI
 
-// MARK: - Main Swipe Screen
 struct ContentView: View {
     @StateObject private var viewModel = ProfileViewModel()
     @State private var selectedProfile: Profile?
+    @State private var topSwipe: SwipeDirection?
+
+    private enum ScreenState {
+        case loading, empty, content
+        case error(String)
+    }
+
+    private var screenState: ScreenState {
+        if viewModel.isLoading { return .loading }
+        if let err = viewModel.errorMessage { return .error(err) }
+        if viewModel.profiles.isEmpty { return .empty }
+        return .content
+    }
 
     var body: some View {
         NavigationStack {
             ZStack {
-                BackgroundGradient()
+                BackgroundGradient().ignoresSafeArea()
 
-                VStack {
-                    StateRenderer(
-                        isLoading: viewModel.isLoading,
-                        errorMessage: viewModel.errorMessage,
-                        isEmpty: viewModel.profiles.isEmpty,
-                        loadingView: { LoadingView() },
-                        errorView: { err in
-                            ErrorView(error: err) { Task { await viewModel.fetchProfiles() } }
-                        },
-                        emptyView: {
-                            EmptyProfilesView { Task { await viewModel.fetchProfiles() } }
-                        },
-                        content: { cards }
-                    )
+                // MAIN AREA
+                Group {
+                    switch screenState {
+                    case .loading:
+                        LoadingView()
 
-                    if !viewModel.isLoading && viewModel.errorMessage == nil && !viewModel.profiles.isEmpty {
-                        BottomControls(
-                            onDislike: { triggerSwipe(.swipeLeft) },
-                            onSuperLike: { triggerSwipe(.swipeUp) },
-                            onLike: { triggerSwipe(.swipeRight) }
-                        )
-                        .padding(.top, 20)
-                        .transition(.opacity)
+                    case .error(let message):
+                        ErrorView(error: message) { Task { await viewModel.fetchProfiles() } }
+
+                    case .empty:
+                        EmptyProfilesView {
+                            Task { await viewModel.fetchProfiles() }
+                        }
+
+                    case .content:
+                        cards
+                            .transition(.opacity)
                     }
                 }
-                .padding(.bottom, 30)
+                // Ensure all non-content states are centered
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .padding(.horizontal)
             }
             .navigationTitle("Discover")
             .navigationBarTitleDisplayMode(.inline)
             .task { await viewModel.fetchProfiles() }
             .refreshable { await viewModel.fetchProfiles() }
+
+            // BOTTOM CONTROLS: live in their own inset so they never overlap cards
+            .safeAreaInset(edge: .bottom) {
+                if case .content = screenState {
+                    BottomControls(
+                        onDislike: { triggerSwipe(.swipeLeft) },
+                        onSuperLike: { triggerSwipe(.swipeUp) },
+                        onLike: { triggerSwipe(.swipeRight) }
+                    )
+                    .padding(.vertical, 10)
+                }
+            }
             .sheet(item: $selectedProfile) { profile in
                 ProfileDetailView(profile: profile, selectedProfile: $selectedProfile)
             }
@@ -58,18 +78,26 @@ struct ContentView: View {
     private var cards: some View {
         ZStack {
             ForEach(viewModel.profiles.reversed()) { profile in
-                SwipeCardView(profile: profile) { direction, profile in
-                    handleSwipe(direction, profile: profile)
-                }
+                SwipeCardView(
+                    profile: profile,
+                    onSwipe: { direction, profile in
+                        handleSwipe(direction, profile: profile)
+                    },
+                    programmaticSwipe: Binding(
+                        get: { profile.id == viewModel.profiles.first?.id ? topSwipe : nil },
+                        set: { _ in topSwipe = nil }
+                    )
+                )
                 .onTapGesture { selectedProfile = profile }
                 .transition(.asymmetric(
                     insertion: .scale.combined(with: .opacity),
-                    removal: .move(edge: .trailing).combined(with: .opacity))
-                )
+                    removal: .move(edge: .trailing).combined(with: .opacity)
+                ))
             }
         }
-        .padding()
-        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: viewModel.profiles)
+        // No extra bottom padding needed because the controls live in an inset
+        .padding(.vertical)
+        .animation(.snappy(duration: 0.35), value: viewModel.profiles)
     }
 
     // MARK: - Actions
@@ -83,12 +111,12 @@ struct ContentView: View {
     }
 
     private func triggerSwipe(_ direction: SwipeDirection) {
-        guard let topProfile = viewModel.profiles.first else { return }
-        handleSwipe(direction, profile: topProfile)
+        guard viewModel.profiles.first != nil else { return }
+        topSwipe = direction
     }
 }
 
-// MARK: - Background
+// Keep your existing BackgroundGradient / views as-is
 private struct BackgroundGradient: View {
     var body: some View {
         LinearGradient(
@@ -96,31 +124,6 @@ private struct BackgroundGradient: View {
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
-        .ignoresSafeArea()
-    }
-}
-
-// MARK: - State Renderer
-/// A tiny helper that keeps `ContentView`'s body clean.
-private struct StateRenderer<Loading: View, ErrorV: View, Empty: View, Content: View>: View {
-    let isLoading: Bool
-    let errorMessage: String?
-    let isEmpty: Bool
-    @ViewBuilder var loadingView: () -> Loading
-    @ViewBuilder var errorView: (String) -> ErrorV
-    @ViewBuilder var emptyView: () -> Empty
-    @ViewBuilder var content: () -> Content
-
-    var body: some View {
-        if isLoading {
-            loadingView()
-        } else if let errorMessage {
-            errorView(errorMessage)
-        } else if isEmpty {
-            emptyView()
-        } else {
-            content()
-        }
     }
 }
 
@@ -130,6 +133,7 @@ struct LoadingView: View {
         ProgressView("Loading Profiles…")
             .font(.title2)
             .accessibilityLabel("Loading profiles")
+            .padding()
     }
 }
 
@@ -198,14 +202,14 @@ private struct RoundIconButton: View {
             Image(systemName: systemName)
                 .resizable()
                 .frame(width: 55, height: 55)
+                .contentShape(Circle())
+                .accessibilityAddTraits(.isButton)
         }
         .buttonStyle(.plain)
-        .contentShape(Circle())
     }
 }
 
 // MARK: - Preview
-
 #Preview {
     ContentView()
 }

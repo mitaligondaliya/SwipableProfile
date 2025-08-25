@@ -31,13 +31,59 @@ private struct SwipeConfig {
     let gradientFraction: CGFloat = 0.45
 }
 
-// MARK: - Swipe Card View
+// MARK: - Swipe Overlay Label
+struct SwipeOverlayLabel: View {
+    enum Style {
+        case like, nope, superLike
+    }
+
+    let style: Style
+    let rotation: Double
+
+    // swiftlint:disable:next large_tuple
+    private var labelData: (text: String, color: Color, icon: String) {
+        switch style {
+        case .like:      return ("LIKE", .green, "hand.thumbsup.fill")
+        case .nope:      return ("NOPE", .red, "xmark.circle.fill")
+        case .superLike: return ("SUPER LIKE", .blue, "star.fill")
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: labelData.icon)
+                .font(.system(size: 20, weight: .bold))
+            Text(labelData.text)
+                .font(.system(size: 28, weight: .heavy, design: .rounded))
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .foregroundStyle(.white)
+        .background(labelData.color.opacity(0.85))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(labelData.color, lineWidth: 3)
+        )
+        .rotationEffect(.degrees(rotation))
+        .shadow(color: labelData.color.opacity(0.5), radius: 8, x: 0, y: 4)
+        .accessibilityLabel(labelData.text)
+    }
+}
+
+// MARK: - SwipeCardView
 struct SwipeCardView: View {
     let profile: Profile
     let onSwipe: (SwipeDirection, Profile) -> Void
 
+    // NEW: programmatic trigger
+    @Binding var programmaticSwipe: SwipeDirection?
+
     @State private var offset: CGSize = .zero
     @GestureState private var isDragging = false
+    @State private var forcedLabelStyle: SwipeOverlayLabel.Style?
+    @State private var isProgrammaticAnimating = false
 
     private let cfg = SwipeConfig()
 
@@ -46,20 +92,17 @@ struct SwipeCardView: View {
             let gradientHeight = min(cfg.gradientMaxHeight, geo.size.height * cfg.gradientFraction)
 
             ZStack {
-                // Base
+                // Base image + gradient
                 Image(profile.imageName ?? "placeholder")
                     .resizable()
                     .scaledToFill()
                     .frame(width: geo.size.width, height: geo.size.height)
                     .clipped()
                     .overlay(alignment: .bottom) {
-                        LinearGradient(
-                            colors: [.black.opacity(0.6), .clear],
-                            startPoint: .bottom,
-                            endPoint: .top
-                        )
-                        .frame(height: gradientHeight)
-                        .allowsHitTesting(false)
+                        LinearGradient(colors: [.black.opacity(0.6), .clear],
+                                       startPoint: .bottom, endPoint: .top)
+                            .frame(height: gradientHeight)
+                            .allowsHitTesting(false)
                     }
 
                 // Info
@@ -68,15 +111,25 @@ struct SwipeCardView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                     .allowsHitTesting(false)
 
-                // Badges on top
+                // Drag badges
                 overlayBadges()
                     .allowsHitTesting(false)
+
+                // forced label for programmatic swipe
+                if let forced = forcedLabelStyle {
+                    forcedOverlay(for: forced)
+                }
             }
-            .cardChrome(radius: cfg.cornerRadius, shadow: cfg.shadowRadius) // Uses ViewModifier
+            .cardChrome(radius: cfg.cornerRadius, shadow: cfg.shadowRadius)
             .offset(offset)
             .rotationEffect(rotationAngle)
             .gesture(dragGesture(geo))
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: offset)
+            // react to binding changes
+            .onChange(of: programmaticSwipe, { _, newValue in
+                guard let dir = newValue else { return }
+                performProgrammaticSwipe(dir, in: geo)
+            })
         }
     }
 
@@ -114,12 +167,60 @@ struct SwipeCardView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                     .padding(30)
             }
-            
+
             if offset.height < cfg.superLikeShowThreshold && abs(offset.width) < cfg.likeShowThreshold {
                 SwipeOverlayLabel(style: .superLike, rotation: 0)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     .padding(.top, 100)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func forcedOverlay(for style: SwipeOverlayLabel.Style) -> some View {
+        // Place the overlays similar to drag positions
+        ZStack {
+            switch style {
+            case .like:
+                SwipeOverlayLabel(style: .like, rotation: -20)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(30)
+            case .nope:
+                SwipeOverlayLabel(style: .nope, rotation: 20)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                    .padding(30)
+            case .superLike:
+                SwipeOverlayLabel(style: .superLike, rotation: 0)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .padding(.top, 100)
+            }
+        }
+        .transition(.opacity)
+    }
+
+    private func performProgrammaticSwipe(_ direction: SwipeDirection, in geo: GeometryProxy) {
+        guard !isProgrammaticAnimating else { return }
+        isProgrammaticAnimating = true
+        programmaticSwipe = nil
+        forcedLabelStyle = mapStyle(direction)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+            withAnimation(.spring(response: 0.40, dampingFraction: 0.85)) {
+                offset = offscreenOffset(for: direction, in: geo, drag: .zero)
+            }
+            onSwipe(direction, profile)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                forcedLabelStyle = nil
+                isProgrammaticAnimating = false
+            }
+        }
+    }
+
+    private func mapStyle(_ direction: SwipeDirection) -> SwipeOverlayLabel.Style {
+        switch direction {
+        case .swipeRight: return .like
+        case .swipeLeft:  return .nope
+        case .swipeUp:    return .superLike
         }
     }
 
@@ -166,47 +267,6 @@ struct SwipeCardView: View {
     }
 }
 
-// MARK: - Swipe Overlay Label
-struct SwipeOverlayLabel: View {
-    enum Style {
-        case like, nope, superLike
-    }
-
-    let style: Style
-    let rotation: Double
-
-    // swiftlint:disable:next large_tuple
-    private var labelData: (text: String, color: Color, icon: String) {
-        switch style {
-        case .like:      return ("LIKE", .green, "hand.thumbsup.fill")
-        case .nope:      return ("NOPE", .red, "xmark.circle.fill")
-        case .superLike: return ("SUPER\nLIKE", .blue, "star.fill")
-        }
-    }
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: labelData.icon)
-                .font(.system(size: 20, weight: .bold))
-            Text(labelData.text)
-                .font(.system(size: 28, weight: .heavy, design: .rounded))
-                .multilineTextAlignment(.center)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .foregroundStyle(.white)
-        .background(labelData.color.opacity(0.85))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(labelData.color, lineWidth: 3)
-        )
-        .rotationEffect(.degrees(rotation))
-        .shadow(color: labelData.color.opacity(0.5), radius: 8, x: 0, y: 4)
-        .accessibilityLabel(labelData.text)
-    }
-}
-
 // MARK: - Preview
 #Preview {
     SwipeCardView(
@@ -220,7 +280,9 @@ struct SwipeOverlayLabel: View {
             occupation: "iOS Developer",
             education: "CS Graduate",
             location: "India"
-        )
-    ) { _, _ in }
+        ),
+        onSwipe: { _, _ in },
+        programmaticSwipe: .constant(nil) // NEW
+    )
     .padding()
 }
