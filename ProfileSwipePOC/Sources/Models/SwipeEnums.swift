@@ -19,7 +19,7 @@ enum MatchResult {
 enum SwipeDirection {
     case swipeLeft
     case swipeRight
-    case swipeUP
+    case swipeUp
 
     var matchResult: MatchResult {
         switch self {
@@ -27,7 +27,7 @@ enum SwipeDirection {
             return .dislike
         case .swipeRight:
             return .like
-        case .swipeUP:
+        case .swipeUp:
             return .superLike
         }
     }
