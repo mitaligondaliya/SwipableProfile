@@ -6,6 +6,7 @@ A proof-of-concept iOS app built with **SwiftUI**, showcasing swipeable profile 
 ---
 
 This project demonstrates modern iOS best practices:  
+- 🧹 **SwiftLint integrated** to enforce consistent Swift code style and conventions
 - 🏛 **MVVM architecture** for clean separation of concerns  
 - ⚡️ **Swift Concurrency (`async/await`)** for data loading  
 - 📂 **Local JSON file** as mock data source  
@@ -38,19 +39,28 @@ This project demonstrates modern iOS best practices:
 
 | Swipe Screen | Profile Detail |
 |--------------|----------------|
-| ![Swipe Screen](screenshots/swipe.png) | ![Detail Screen](screenshots/detail.png) |
-
-(Add your screenshots into a `screenshots/` folder inside repo and update the paths above)
+| ![Swipe Screen](ProfileSwipePOC/Screenshots/mainCard.png) | ![Detail Screen](ProfileSwipePOC/Screenshots/detailView.png) |
 
 ---
 
 ## 📹 Demo
-(Insert screen recording GIF here, e.g. `demo.gif` in repo)
-
+![Swipe Screen](ProfileSwipePOC/Screenshots/swipeProfile.gif)
 ---
 
 ## 🚀 Getting Started
 
-### 1. Clone Repo
+### 1. Clone Repository
+
 ```bash
 git clone https://github.com/your-username/ProfileSwipePOC.git
+cd ProfileSwipePOC
+```
+
+### 2. Open Project in Xcode
+
+Double-click `ProfileSwipePOC.xcodeproj` or `ProfileSwipePOC.xcworkspace`.
+
+### 3. Run the App
+
+Select a simulator or device and press **Run (⌘R)**.
+
